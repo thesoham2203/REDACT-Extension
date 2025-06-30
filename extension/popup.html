@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redaction Carousel</title>
+    <title>RE-DACT Chrome Extension</title>
     <link rel="stylesheet" href="popup.css">
 </head>
 
@@ -23,62 +23,65 @@
                     <h2>Step 1: Upload File</h2>
                     <input type="file" id="file-input" required>
                 </div>
+
                 <!-- Step 2 -->
                 <div class="step">
                     <h2>Step 2: Redaction Level</h2>
-                    <select id="redact-level">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High (Premium)</option>
+                    <select id="redaction-level">
+                        <option value="25">Low</option>
+                        <option value="50">Medium</option>
+                        <option value="75">High (Premium)</option>
+                        <option value="100">Extreme</option>
                     </select>
                 </div>
+
                 <!-- Step 3 -->
                 <div class="step">
                     <h2>Step 3: Redaction Type</h2>
-                    <select id="redact-type">
-                        <option value="blackout">Blackout</option>
+                    <select id="redaction-type">
+                        <option value="black">Blackout</option>
                         <option value="blur">Blur</option>
                         <option value="synthetic">Synthetic Data (Premium)</option>
                     </select>
                 </div>
+
                 <!-- Step 4 -->
-           
-            <div class="step">
-                <h2>Step 4: Review</h2>
-                <p>Before and after preview will be displayed here.</p>
-                <div class="preview-container">
-                    <div class="preview-section">
-                        <h3>Before</h3>
-                        <div class="preview-box">
-                            <object class="preview-content" data="before-file.pdf" type="application/pdf"></object>
+                <div class="step">
+                    <h2>Step 4: Review</h2>
+                    <p>Before and after preview will be displayed here.</p>
+                    <div class="preview-container">
+                        <div class="preview-section">
+                            <h3>Before</h3>
+                            <div class="preview-box">
+                                <object class="preview-content" id="before-preview" data=""
+                                    type="application/pdf"></object>
+                            </div>
                         </div>
-                    </div>
-                    <div class="preview-section">
-                        <h3>After</h3>
-                        <div class="preview-box">
-                            <object class="preview-content" data="after-file.pdf" type="application/pdf"></object>
+                        <div class="preview-section">
+                            <h3>After</h3>
+                            <div class="preview-box">
+                                <object class="preview-content" id="after-preview" data=""
+                                    type="application/pdf"></object>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
 
                 <!-- Step 5 -->
                 <div class="step">
                     <h2>Step 5: Download</h2>
-                    <button id="download-btn" class="action-btn">Download Redacted Document</button>
+                    <button id="submit-button" class="action-btn">Redact Now</button>
+                    <p id="status" style="font-size: 0.85em; margin-top: 10px; text-align: center;"></p>
                 </div>
             </div>
         </div>
 
-        <!-- Arrows -->
+        <!-- Navigation Arrows -->
         <div class="arrows">
             <button id="prev-arrow" class="arrow-btn">←</button>
             <button id="next-arrow" class="arrow-btn">→</button>
         </div>
     </div>
-
-
 
     <script src="popup.js"></script>
 </body>

@@ -1,6 +1,9 @@
 # backend/app/com.py
 import os
-from app.model import PDFRedactor, ImageRedactor, DOCRedactor
+from app.model.PDFRedact import PDFRedactor
+from app.model.IMGRedact import ImageRedactor
+from app.model.DOCRedact import DOCRedactor
+
 
 def handle_file(file_path, redaction_type, redaction_level):
     ext = os.path.splitext(file_path)[-1].lower()
