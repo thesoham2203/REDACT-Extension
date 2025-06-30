@@ -1,0 +1,257 @@
+/* Reset and Body Styles */
+body,
+h1,
+h2,
+select,
+button,
+p {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    width: 420px;
+    /* Fixed width */
+    height: 576px;
+    /* Fixed height */
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+body.light-mode {
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+body.dark-mode {
+    background-color: #1e1e1e;
+    color: #f9f9f9;
+}
+
+/* Popup Container */
+.popup {
+    width: 90%;
+    max-width: 350px;
+    background-color: inherit;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.toggle-btn {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: inherit;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.toggle-btn:hover {
+    transform: scale(1.1);
+    color: #007bff;
+}
+
+/* Carousel */
+.carousel {
+    position: relative;
+    overflow: hidden;
+    height: 260px;
+    /* Fixed height to maintain alignment across slides */
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.6s ease-in-out;
+}
+
+.step {
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Inputs */
+input[type="file"] {
+    padding: 12px;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #555;
+    width: 90%;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+input[type="file"]:hover {
+    border-color: #0056b3;
+    background-color: #f3f8fe;
+}
+
+body.dark-mode input[type="file"] {
+    border-color: #666;
+    background-color: #333;
+    color: #f9f9f9;
+}
+
+/* Dropdowns */
+select {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    outline: none;
+}
+
+select:hover {
+    border-color: #0056b3;
+    background-color: #f3f8fe;
+}
+
+body.dark-mode select {
+    border-color: #666;
+    background-color: #333;
+    color: #f9f9f9;
+}
+
+/* Buttons */
+button {
+    padding: 12px 20px;
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+button:focus {
+    outline: 2px solid #007bff;
+}
+
+/* Arrows */
+.arrows {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.arrow-btn {
+    font-size: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.arrow-btn:hover {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+/* Step 4 - Review Styling */
+.preview-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 20px;
+    width: 95%;
+    padding: 10px 0;
+}
+
+.preview-container .preview-section {
+    flex: 1;
+    text-align: center;
+}
+
+.preview-section h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: inherit;
+}
+
+.preview-box {
+    width: 95%;
+    height: 240px;
+    /* Adjust height to fit content */
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.preview-box:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .preview-box {
+    background-color: #454545;
+}
+
+.preview-content {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: contain;
+    /* Ensure content fits inside */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .popup {
+        width: 95%;
+    }
+
+    .preview-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

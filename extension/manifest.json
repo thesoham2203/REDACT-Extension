@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "RE-DACT Extension",
+  "version": "1.0",
+  "description": "A tool for secure and customizable document redaction.",
+  "permissions": ["storage", "identity", "identity.email"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html"
+  }
+}
