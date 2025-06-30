@@ -13,9 +13,7 @@ p {
 
 body {
     width: 420px;
-    /* Fixed width */
     height: 576px;
-    /* Fixed height */
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -76,7 +74,6 @@ body.dark-mode {
     position: relative;
     overflow: hidden;
     height: 260px;
-    /* Fixed height to maintain alignment across slides */
 }
 
 .carousel-track {
@@ -93,6 +90,7 @@ body.dark-mode {
     text-align: center;
     height: 100%;
     box-sizing: border-box;
+    transition: opacity 0.4s ease;
 }
 
 /* Inputs */
@@ -217,7 +215,6 @@ button:focus {
 .preview-box {
     width: 95%;
     height: 240px;
-    /* Adjust height to fit content */
     border: 2px solid #007bff;
     border-radius: 10px;
     overflow: hidden;
@@ -241,7 +238,20 @@ body.dark-mode .preview-box {
     height: 100%;
     border: none;
     object-fit: contain;
-    /* Ensure content fits inside */
+}
+
+/* Redaction status */
+#status {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: #007bff;
+    transition: color 0.3s ease;
+}
+
+body.dark-mode #status {
+    color: #66ccff;
 }
 
 /* Responsive Design */
