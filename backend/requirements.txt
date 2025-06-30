@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+PyMuPDF
+python-docx
+opencv-python
+faker
+spacy
+pytesseract
