@@ -28,7 +28,9 @@ async def redact_file(
     redaction_level: int = Form(...),
 ):
     with tempfile.TemporaryDirectory() as tmpdirname:
-        file_path = os.path.join(tmpdirname, file.filename)
+        original_filename = file.filename or "uploaded_file"
+        file_path = os.path.join(tmpdirname, original_filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 

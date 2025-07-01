@@ -1,15 +1,12 @@
-# backend/app/model/PDFRedactor.py
-
 import fitz  # PyMuPDF
 import spacy
 import os
 import re
 from faker import Faker
-from io import BytesIO
 
 
 class PDFRedactor:
-    nlp = spacy.load("en_core_web_sm")  # class-level load
+    nlp = spacy.load("en_core_web_sm")  # Load once
     fake = Faker()
 
     @staticmethod
@@ -20,8 +17,8 @@ class PDFRedactor:
 
         for page_num in range(len(doc)):
             page = doc.load_page(page_num)
-            text += page.get_text("text")
-            for block in page.get_text("dict")["blocks"]:
+            text += page.get_text("text")  # type: ignore[attr-defined]
+            for block in page.get_text("dict")["blocks"]:  # type: ignore[attr-defined]
                 if block['type'] == 0:
                     for line in block["lines"]:
                         for span in line["spans"]:
@@ -41,25 +38,21 @@ class PDFRedactor:
             if ent.label_ in ['PERSON', 'GPE', 'ORG', 'DATE', 'MONEY']:
                 sensitive_data.append((ent.start, ent.end, ent.text, ent.label_))
 
-        # Regex for common PII
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
-        phone_pattern = r'\b(\+?[0-9]{1,3})?[-. ]?(\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4})\b'
-        ipv4_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
-        ipv6_pattern = r'\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b'
+        patterns = {
+            'EMAIL': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b',
+            'PHONE': r'\b(\+?[0-9]{1,3})?[-. ]?(\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4})\b',
+            'IPV4': r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b',
+            'IPV6': r'\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b',
+        }
 
-        emails = re.findall(email_pattern, text)
-        phones = re.findall(phone_pattern, text)
-        ipv4s = re.findall(ipv4_pattern, text)
-        ipv6s = re.findall(ipv6_pattern, text)
-
-        for email in emails:
-            sensitive_data.append((0, 0, email, 'EMAIL'))
-        for phone in phones:
-            sensitive_data.append((0, 0, phone[1], 'PHONE'))
-        for ipv4 in ipv4s:
-            sensitive_data.append((0, 0, ipv4, 'IPV4'))
-        for ipv6 in ipv6s:
-            sensitive_data.append((0, 0, ipv6, 'IPV6'))
+        for label, pattern in patterns.items():
+            matches = re.findall(pattern, text)
+            if label == 'PHONE':
+                for phone in matches:
+                    sensitive_data.append((0, 0, phone[1], label))  # phone[1] = number part
+            else:
+                for match in matches:
+                    sensitive_data.append((0, 0, match, label))
 
         return sensitive_data
 
@@ -79,32 +72,12 @@ class PDFRedactor:
         }.get(label, "SYNTHETIC_DATA")
 
     @staticmethod
-    def redact_blackout(page, bbox):
-        rect = fitz.Rect(*bbox)
-        page.add_redact_annot(rect, fill=(0, 0, 0))
-        page.apply_redactions()
-
-    @staticmethod
-    def redact_blur(page, bbox):
-        rect = fitz.Rect(*bbox)
-        page.draw_rect(rect, color=(169/255, 169/255, 169/255, 0.5), fill=True)
-
-    @staticmethod
-    def replace_with_synthetic_data(page, bbox, label):
-        synthetic_text = PDFRedactor.generate_synthetic_data(label)
-        rect = fitz.Rect(*bbox)
-        page.draw_rect(rect, color=(1, 1, 1), fill=True)
-        page.insert_text((bbox[0], bbox[3] - 5), synthetic_text, fontsize=12, color=(0, 0, 0))
-
-    @staticmethod
     def redact(file_path: str, redaction_type: str, redaction_level: int) -> str:
         text, blocks = PDFRedactor.extract_text_and_coordinates(file_path)
         sensitive_data = PDFRedactor.extract_sensitive_data(text)
-
         doc = fitz.open(file_path)
-        entities_to_redact = set()
 
-        # Redaction levels
+        entities_to_redact = set()
         if redaction_level >= 25:
             entities_to_redact.update(['EMAIL', 'PHONE', 'IPV4', 'IPV6'])
         if redaction_level >= 50:
@@ -114,20 +87,36 @@ class PDFRedactor:
         if redaction_level == 100:
             entities_to_redact.update(['PERSON'])
 
-        filtered_data = [data for data in sensitive_data if data[3] in entities_to_redact]
+        filtered_data = [d for d in sensitive_data if d[3] in entities_to_redact]
+
+        redactions_by_page = {}
 
         for _, _, sensitive_text, label in filtered_data:
+            target = sensitive_text.strip().lower()
             for block in blocks:
-                if sensitive_text in block["text"]:
-                    page = doc.load_page(block["page_num"])
-                    bbox = block["bbox"]
-                    if redaction_type == 'black':
-                        PDFRedactor.redact_blackout(page, bbox)
-                    elif redaction_type == 'blur':
-                        PDFRedactor.redact_blur(page, bbox)
-                    elif redaction_type == 'synthetic':
-                        PDFRedactor.replace_with_synthetic_data(page, bbox, label)
+                if target in block["text"].strip().lower():
+                    page_num = block["page_num"]
+                    bbox = tuple(block["bbox"])
+                    if page_num not in redactions_by_page:
+                        redactions_by_page[page_num] = []
+                    redactions_by_page[page_num].append((bbox, label))
+
+        for page_num, items in redactions_by_page.items():
+            page = doc.load_page(page_num)
+            for bbox, label in items:
+                rect = fitz.Rect(*bbox)
+                if redaction_type == 'black':
+                    page.add_redact_annot(rect, fill=(0, 0, 0))
+                elif redaction_type == 'blur':
+                    page.draw_rect(rect, color=(169/255, 169/255, 169/255, 0.5), fill=True)  # gray # type: ignore[attr-defined]
+                elif redaction_type == 'synthetic':
+                    page.draw_rect(rect, color=(1, 1, 1), fill=True)  # white background # type: ignore[attr-defined]
+                    synthetic = PDFRedactor.generate_synthetic_data(label)
+                    page.insert_text((bbox[0], bbox[3] - 5), synthetic, fontsize=12, color=(0, 0, 0))  # black text # type: ignore[attr-defined]
+
+            if redaction_type == 'black':
+                page.apply_redactions()  # type: ignore[attr-defined]
 
         output_path = os.path.join(os.path.dirname(file_path), "redacted_" + os.path.basename(file_path))
-        doc.save(output_path)
+        doc.save(output_path, garbage=4, deflate=True, clean=True)
         return output_path

@@ -9,20 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentStep = 0;
 
-    // Toggle Light/Dark Mode
+    // 🔁 Toggle Light/Dark Mode
     toggleModeButton.addEventListener('click', () => {
         document.body.classList.toggle('light-mode');
         document.body.classList.toggle('dark-mode');
         toggleModeButton.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
     });
 
-    // Update Carousel
+    // 🔄 Update Carousel
     function updateCarousel() {
         const translateX = -currentStep * 100;
         carouselTrack.style.transform = `translateX(${translateX}%)`;
     }
 
-    // Next Slide
+    // ➡️ Next Slide
     nextArrow.addEventListener('click', () => {
         if (currentStep < steps.length - 1) {
             currentStep++;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Previous Slide
+    // ⬅️ Previous Slide
     prevArrow.addEventListener('click', () => {
         if (currentStep > 0) {
             currentStep--;
@@ -38,14 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Redact and download logic
-    submitButton.addEventListener('click', async () => {
+    // 🛡️ Redact and Download
+    submitButton.addEventListener('click', async (e) => {
+        e.preventDefault(); // ⛔ Stop native form submission (if any)
+
         const fileInput = document.getElementById('file-input');
         const redactionType = document.getElementById('redaction-type').value;
         const redactionLevel = document.getElementById('redaction-level').value;
 
+        status.textContent = "";
+
         if (!fileInput.files.length) {
-            status.textContent = "Please select a file.";
+            status.textContent = "❗ Please select a file.";
             return;
         }
 
@@ -54,10 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('redaction_type', redactionType);
         formData.append('redaction_level', redactionLevel);
 
-        status.textContent = "Processing…";
+        status.textContent = "⏳ Processing…";
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/redact', {
+            const response = await fetch('http://127.0.0.1:8000/redact', { 
                 method: 'POST',
                 body: formData,
             });
@@ -67,17 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
+            const url = URL.createObjectURL(blob);
+
             const a = document.createElement('a');
             a.href = url;
             a.download = 'redacted_' + fileInput.files[0].name;
+            a.style.display = 'none';
+            document.body.appendChild(a);
             a.click();
-            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
-            status.textContent = "✅ File redacted and downloaded!";
+            status.textContent = "✅ Redacted file downloaded!";
         } catch (error) {
-            console.error(error);
-            status.textContent = "❌ Error during redaction.";
+            console.error("Redaction Error:", error);
+            status.textContent = "❌ Redaction failed. Check console.";
         }
     });
+});
+window.addEventListener('unload', async () => {
+    try {
+        await fetch('http://127.0.0.1:8000/cleanup', {
+            method: 'DELETE'
+        });
+    } catch (err) {
+        console.warn("Cleanup failed:", err);
+    }
 });
