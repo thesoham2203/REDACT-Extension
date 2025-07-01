@@ -158,7 +158,7 @@ Now your extension will be active in the Chrome toolbar.
 
 ## 📚 License
 
-This project is licensed under the [MIT License](./LICENSE)
+This project is licensed under the GNU GENERAL PUBLIC LICENSE v3
 
 ---
 
