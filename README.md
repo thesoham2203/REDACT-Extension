@@ -3,7 +3,7 @@
 
 ![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688?logo=fastapi)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Chromium%20Extension-yellow?logo=googlechrome)
 
 **REDACT** is a secure and easy-to-use Chrome Extension that performs redaction, masking, and anonymization of sensitive data—particularly Personally Identifiable Information (PII)—from documents. Built for privacy, it supports PDFs, images, and Word documents directly from your browser using a FastAPI Python backend.
@@ -158,7 +158,7 @@ Now your extension will be active in the Chrome toolbar.
 
 ## 📚 License
 
-This project is licensed under the [MIT License](./LICENSE)
+This project is licensed under the GNU GENERAL PUBLIC LICENSE v3
 
 ---
 
