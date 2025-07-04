@@ -4,9 +4,15 @@ import re
 import os
 import numpy as np
 from faker import Faker
+import dlib
 
 class ImageRedactor:
     fake = Faker()
+
+    # Face Detection Setup
+    face_detector = dlib.get_frontal_face_detector()
+    model_path = os.path.join(os.path.dirname(__file__), "shape_predictor_68_face_landmarks.dat")
+    landmark_predictor = dlib.shape_predictor(model_path)
 
     @staticmethod
     def extract_sensitive_data(text):
@@ -16,10 +22,10 @@ class ImageRedactor:
             'AADHAAR': r'\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b',
             'PAN': r'\b[A-Z]{5}[0-9]{4}[A-Z]\b',
             'DATE': r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b',
+            'NAME': r'\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)\b'  # crude full name guess
         }
 
         sensitive_matches = []
-
         for label, pattern in patterns.items():
             matches = re.findall(pattern, text)
             for match in matches:
@@ -35,47 +41,72 @@ class ImageRedactor:
             'PHONE': ImageRedactor.fake.phone_number(),
             'AADHAAR': ImageRedactor.fake.bothify(text='#### #### ####'),
             'PAN': ImageRedactor.fake.bothify(text='?????####?'),
-            'DATE': ImageRedactor.fake.date()
+            'DATE': ImageRedactor.fake.date(),
+            'NAME': ImageRedactor.fake.name()
         }.get(label, "SYNTHETIC")
+
+    @staticmethod
+    def redact_faces(image):
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        faces = ImageRedactor.face_detector(gray, 1)
+        for face in faces:
+            landmarks = ImageRedactor.landmark_predictor(gray, face)
+            points = np.array([[landmarks.part(i).x, landmarks.part(i).y] for i in range(68)])
+            hull = cv2.convexHull(points)
+            mask = np.zeros(image.shape[:2], dtype=np.uint8)
+            cv2.fillConvexPoly(mask, hull, 255)
+            blurred = cv2.GaussianBlur(image, (55, 55), 30)
+            image[mask == 255] = blurred[mask == 255]
+        return image
 
     @staticmethod
     def redact(file_path: str, redaction_type: str, redaction_level: int) -> str:
         image = cv2.imread(file_path)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # OCR
-        custom_config = r'--oem 3 --psm 6'
-        data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config=custom_config)
-        raw_text = " ".join(data['text'])
+        # Optional preprocessing
+        gray = cv2.bilateralFilter(gray, 11, 17, 17)
 
-        # Extract sensitive content
-        sensitive_items = ImageRedactor.extract_sensitive_data(raw_text)
+        # Tesseract OCR with Hindi + English
+        config = r'--oem 3 --psm 6 -l eng+hin'
+        data = pytesseract.image_to_data(gray, output_type=pytesseract.Output.DICT, config=config)
+        full_text = " ".join(data['text'])
 
-        # Apply redactions
+        # Get sensitive entities
+        sensitive_items = ImageRedactor.extract_sensitive_data(full_text)
+
+        # Redact matched blocks
         for i, word in enumerate(data['text']):
+            if not word.strip():
+                continue
+
             for sensitive_text, label in sensitive_items:
-                if sensitive_text in word:
+                if sensitive_text in word or word in sensitive_text:
                     x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+
+                    # Slightly expand redaction box
+                    pad = 2
+                    x, y = max(x - pad, 0), max(y - pad, 0)
+                    w, h = w + 2 * pad, h + 2 * pad
 
                     if redaction_type == 'black':
                         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 0), -1)
 
                     elif redaction_type == 'blur':
-                        roi = image[y:y+h, x:x+w]
+                        roi = image[y:y + h, x:x + w]
                         if roi.size > 0:
                             roi = cv2.GaussianBlur(roi, (23, 23), 30)
-                            image[y:y+h, x:x+w] = roi
+                            image[y:y + h, x:x + w] = roi
 
                     elif redaction_type == 'synthetic':
-                        synthetic_text = ImageRedactor.generate_synthetic_data(label)
+                        synthetic = ImageRedactor.generate_synthetic_data(label)
                         cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), -1)
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        font_scale = 0.5
-                        thickness = 1
-                        color = (0, 0, 0)
-                        cv2.putText(image, synthetic_text, (x, y + h - 5), font, font_scale, color, thickness, cv2.LINE_AA)
+                        cv2.putText(image, synthetic, (x, y + h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1)
 
-        # Save the redacted image
+        # Face redaction
+        if redaction_level >= 100:
+            image = ImageRedactor.redact_faces(image)
+
         output_path = os.path.join(os.path.dirname(file_path), "redacted_" + os.path.basename(file_path))
         cv2.imwrite(output_path, image)
         return output_path
